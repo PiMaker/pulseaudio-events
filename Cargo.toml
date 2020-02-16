@@ -1,0 +1,10 @@
+[package]
+name = "pulseaudio-events"
+version = "0.1.0"
+authors = ["Stefan Reiter <stefan@pimaker.at>"]
+edition = "2018"
+
+[dependencies]
+clap = '~2.33'
+ctrlc = { version = "3.0", features = ["termination"] }
+libpulse-binding = '~2.15'
