@@ -12,8 +12,6 @@ use std::boxed::Box;
 use std::vec::Vec;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use std::thread;
-use std::time;
 
 use pulse::context::Context;
 use pulse::context::subscribe::{subscription_masks,Operation,Facility};
@@ -166,21 +164,24 @@ fn main() {
     let r = running.clone();
     ctrlc::set_handler(move || {
         r.store(false, Ordering::SeqCst);
+        process::exit(1);
     }).expect("Error setting exit handler");
     while running.load(Ordering::SeqCst) {
-        match mainloop.borrow_mut().iterate(false) {
+        match mainloop.borrow_mut().iterate(true) {
             IterateResult::Quit(_) |
             IterateResult::Err(_) => {
                 eprintln!("PulseAudio connection failed, quitting");
+                mainloop.borrow_mut().quit(Retval(0));
+                context.borrow_mut().disconnect();
                 process::exit(1);
             },
             IterateResult::Success(_) => {},
         }
-        thread::sleep(time::Duration::from_millis(10));
     }
 
-    mainloop.borrow_mut().quit(Retval(0));
-    context.borrow_mut().disconnect();
+    // These *should* probably be called, but whatever
+    // mainloop.borrow_mut().quit(Retval(0));
+    // context.borrow_mut().disconnect();
 }
 
 fn success_callback(success: bool) {
